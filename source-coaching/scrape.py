@@ -61,6 +61,7 @@ def get_content(year, month):
                     " ", "_")
                 with open(fname, "w") as f:
                     f.write("\n".join((title, content, src, BASE+link)))
+                sleep(1)
             except Exception as e:
                 print("Failed to get", link, e)
         if more:

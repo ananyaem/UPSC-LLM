@@ -1,5 +1,6 @@
 from http.client import HTTPException
 import json
+from time import sleep
 from bs4 import BeautifulSoup
 import requests
 import os
@@ -33,7 +34,7 @@ init = get(BASE)
 START = int(init.json()["issues"]["web"][0]["url"].split("/")[-2])
 
 for issue in reversed(range(START+1)):
-    CONF = f"config-{issue}.txt"
+    CONF = f"/tmp/config-{issue}.txt"
     if os.path.exists(CONF):
         continue
     print(issue)
@@ -69,13 +70,14 @@ for issue in reversed(range(START+1)):
                     r = get(url)
                     if r.status_code == 200:
                         try:
-                            soup = BeautifulSoup(r.text)
+                            soup = BeautifulSoup(r.text, "html.parser")
                             title = soup.find('title')
                             body = soup.find(class_="body")
                             if body:
                                 if body.text:
                                     with open(fname, "w") as out:
                                         out.write(body.text)
+                                        sleep(1)
                         except Exception as e:
                             print(e)
 

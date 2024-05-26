@@ -19,9 +19,9 @@ services:
     volumes:
       - ./source-coaching/data:/app/data
 
-  # news:
-  #   build: 
-  #     context: source-news
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./source-news/data:/app/data
+  news:
+    build: 
+      context: source-news
+      dockerfile: Dockerfile
+    volumes:
+      - ./source-news/data:/app/data
