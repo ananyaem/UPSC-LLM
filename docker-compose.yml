@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  pathway:
+    build: 
+      context: demo-question-answering
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Cache:/app/Cache
+      - ./source-coaching/data:/app/data/coaching
+      - ./source-news/data:/app/data/news
+
+  coaching:
+    build: 
+      context: source-coaching
+      dockerfile: Dockerfile
+    volumes:
+      - ./source-coaching/data:/app/data
+
+  # news:
+  #   build: 
+  #     context: source-news
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./source-news/data:/app/data
