@@ -1,49 +1,34 @@
-#!/usr/bin/env python
-from typing import List
-
 from fastapi import FastAPI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_cohere import ChatCohere
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_cohere import CohereEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.tools.retriever import create_retriever_tool
-from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain import hub
-from langchain.agents import create_openai_functions_agent
-from langchain.agents import AgentExecutor
-from langchain.pydantic_v1 import BaseModel, Field
-from langchain_core.messages import BaseMessage
+from langchain.pydantic_v1 import BaseModel
 from langserve import add_routes
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers.string import StrOutputParser
 
-# 1. Load Retriever
-loader = WebBaseLoader("https://docs.smith.langchain.com/user_guide")
-docs = loader.load()
-text_splitter = RecursiveCharacterTextSplitter()
-documents = text_splitter.split_documents(docs)
+import pandas as pd
+import requests
+
+with open("data.csv", "w") as f:
+    r = requests.get("https://docs.google.com/spreadsheets/u/7/d/1JNgL-tDuU_R6BjvBgEzUjTJwEDTpqv3zK08KZ6Ab85Q/export?format=csv&id=1JNgL-tDuU_R6BjvBgEzUjTJwEDTpqv3zK08KZ6Ab85Q&gid=1175330818")
+    f.write(r.text)
+
+df = pd.read_csv("data.csv")
+links = df['Link'].dropna().tolist()
+
+from langchain_community.document_loaders import WebBaseLoader
+loader = WebBaseLoader(links, requests_per_second=100, verify_ssl=False)
+documents = loader.aload()
+
 embeddings = CohereEmbeddings()
 vector = FAISS.from_documents(documents, embeddings)
 retriever = vector.as_retriever()
 
-# 2. Create Tools
-retriever_tool = create_retriever_tool(
-    retriever,
-    "langsmith_search",
-    "Search for information about LangSmith. For any questions about LangSmith, you must use this tool!",
-)
-# search = TavilySearchResults()
-# tools = [retriever_tool] #, search]
 
-
-# 3. Create Agent
-# prompt = hub.pull("hwchase17/openai-functions-agent")
 llm = ChatCohere()
-# agent = llm | retriever_tool | prompt
-# agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-
 prompt = hub.pull("rlm/rag-prompt")
 
 def format_docs(docs):
@@ -61,17 +46,11 @@ rag_chain = (
     | StrOutputParser()
 )
 
-# 4. App definition
 app = FastAPI(
     title="LangChain Server",
     version="1.0",
     description="A simple API server using LangChain's Runnable interfaces",
 )
-
-# 5. Adding chain route
-
-# We need to add these input/output schemas because the current AgentExecutor
-# is lacking in schemas.
 
 
 class Input(BaseModel): 
